@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(fluent-bit)
 
-# Update CFLAGS
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fPIC ")
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
@@ -50,6 +49,9 @@ option(FLB_BACKTRACE          "Enable stacktrace support"    Yes)
 option(FLB_LUAJIT             "Enable Lua Scripting support" Yes)
 option(FLB_STATIC_CONF        "Build binary using static configuration")
 option(FLB_SANITIZE_ADDRESS   "Enable address sanitizer"      No)
+
+# Usage of System Libraries
+option(FLB_SYSTEM_MBEDTLS     "Use mbedtls provided by system"  No)
 
 # Metrics: Experimental Feature, disabled by default on 0.12 series
 # but enabled in the upcoming 0.13 release. Note that development
@@ -275,11 +277,24 @@ endif()
 
 if(FLB_TLS)
   FLB_DEFINITION(FLB_HAVE_TLS)
-  option(ENABLE_TESTING  OFF)
-  option(ENABLE_PROGRAMS OFF)
-  option(INSTALL_MBEDTLS_HEADERS OFF)
-  add_subdirectory(lib/mbedtls-2.13.0 EXCLUDE_FROM_ALL)
-  include_directories(lib/mbedtls-2.13.0/include)
+  if(FLB_SYSTEM_MBEDTLS)
+    set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+    find_package(ZLIB REQUIRED)
+    find_package(MbedTls REQUIRED)
+    include_directories(${ZLIB_INCLUDE_DIRS} ${MBEDTLS_INCLUDE_DIR})
+    add_definitions(-DFLB_SYSTEM_MBEDTLS=1)
+    set(ENABLE_ZLIB_SUPPORT ON)
+    set(extra_libs
+      ${extra_libs}
+      ${MBEDTLS_LIBRARY}
+      ${ZLIB_LIBRARIES})
+  else()
+    option(ENABLE_TESTING  OFF)
+    option(ENABLE_PROGRAMS OFF)
+    option(INSTALL_MBEDTLS_HEADERS OFF)
+    add_subdirectory(lib/mbedtls-2.13.0 EXCLUDE_FROM_ALL)
+    include_directories(lib/mbedtls-2.13.0/include)
+  endif()
 endif()
 
 # Metrics
