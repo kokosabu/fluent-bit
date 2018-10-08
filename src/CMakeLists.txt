@@ -126,9 +126,11 @@ if(FLB_JEMALLOC)
 endif()
 
 if(FLB_REGEX)
-  set(extra_libs
-    ${extra_libs}
-    "libonigmo")
+  if(!FLB_SYSTEM_ONIGMO)
+    set(extra_libs
+      ${extra_libs}
+      "libonigmo")
+  endif()
   set(src
     ${src}
     "flb_regex.c"

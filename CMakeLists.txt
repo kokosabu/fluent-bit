@@ -52,6 +52,7 @@ option(FLB_SANITIZE_ADDRESS   "Enable address sanitizer"      No)
 
 # Usage of System Libraries
 option(FLB_SYSTEM_MBEDTLS     "Use mbedtls provided by system"  No)
+option(FLB_SYSTEM_ONIGMO      "Use onigmo provided by system"   No)
 
 # Metrics: Experimental Feature, disabled by default on 0.12 series
 # but enabled in the upcoming 0.13 release. Note that development
@@ -463,17 +464,27 @@ endif()
 # Onigmo (Regex Engine)
 # =====================
 if(FLB_REGEX)
-  ExternalProject_Add(onigmo
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/onigmo
-    CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lib/onigmo/configure ${AUTOCONF_HOST_OPT} --with-pic --disable-shared --enable-static --prefix=<INSTALL_DIR>
-    CFLAGS=-std=gnu99\ -Wall\ -pipe\ -g3\ -O3\ -funroll-loops
-    BUILD_COMMAND ${MAKE}
-    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/
-    INSTALL_COMMAND $(MAKE) install)
-  add_library(libonigmo STATIC IMPORTED GLOBAL)
-  set_target_properties(libonigmo PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/lib/libonigmo.a")
-  add_dependencies(libonigmo onigmo)
-  include_directories("${CMAKE_CURRENT_BINARY_DIR}/include/")
+  if(FLB_SYSTEM_ONIGMO)
+    set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+    find_package(ONIGMO REQUIRED)
+    link_directories(${ONIGMO_LIBRARY_DIRS})
+    include_directories(${ONIGMO_INCLUDE_DIRS})
+    set(extra_libs
+      ${extra_libs}
+      ${ONIGMO_LIBRARIES})
+  else()
+    ExternalProject_Add(onigmo
+      SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/onigmo
+      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lib/onigmo/configure ${AUTOCONF_HOST_OPT} --with-pic --disable-shared --enable-static --prefix=<INSTALL_DIR>
+      CFLAGS=-std=gnu99\ -Wall\ -pipe\ -g3\ -O3\ -funroll-loops
+      BUILD_COMMAND ${MAKE}
+      INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/
+      INSTALL_COMMAND $(MAKE) install)
+    add_library(libonigmo STATIC IMPORTED GLOBAL)
+    set_target_properties(libonigmo PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/lib/libonigmo.a")
+    add_dependencies(libonigmo onigmo)
+    include_directories("${CMAKE_CURRENT_BINARY_DIR}/include/")
+  endif()
   FLB_DEFINITION(FLB_HAVE_REGEX)
 endif()
 
