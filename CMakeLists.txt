@@ -248,7 +248,7 @@ add_subdirectory(lib/msgpack-3.1.1 EXCLUDE_FROM_ALL)
 # Lib: build the core libraries used by Fluent-Bit
 FLB_DEFINITION(JSMN_PARENT_LINKS)
 FLB_DEFINITION(JSMN_STRICT)
-if(!FLB_SYSTEM_JSMN)
+if(NOT FLB_SYSTEM_JSMN)
   add_subdirectory(lib/jsmn)
   set(extra_headers
     ${extra_headers}

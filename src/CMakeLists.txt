@@ -125,7 +125,7 @@ if(FLB_JEMALLOC)
 endif()
 
 if(FLB_REGEX)
-  if(!FLB_SYSTEM_ONIGMO)
+  if(NOT FLB_SYSTEM_ONIGMO)
     set(extra_libs
       ${extra_libs}
       "libonigmo")
@@ -137,7 +137,7 @@ if(FLB_REGEX)
 endif()
 
 if(FLB_LUAJIT)
-  if(!FLB_SYSTEM_LUAJIT)
+  if(NOT FLB_SYSTEM_LUAJIT)
     set(extra_libs
       ${extra_libs}
       "libluajit")
