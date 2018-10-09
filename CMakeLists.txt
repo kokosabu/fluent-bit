@@ -51,6 +51,7 @@ option(FLB_STATIC_CONF        "Build binary using static configuration")
 option(FLB_SANITIZE_ADDRESS   "Enable address sanitizer"      No)
 
 # Usage of System Libraries
+option(FLB_SYSTEM_LUAJIT      "Use LuaJIT provided by system"   No)
 option(FLB_SYSTEM_MBEDTLS     "Use mbedtls provided by system"  No)
 option(FLB_SYSTEM_ONIGMO      "Use onigmo provided by system"   No)
 
@@ -491,16 +492,26 @@ endif()
 # LuaJIT (Scripting Support)
 # ==========================
 if(FLB_LUAJIT)
-  set(LUA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib/LuaJIT-2.1.0-beta3)
-  ExternalProject_Add(luajit
-    SOURCE_DIR ${LUA_PATH}
-    CONFIGURE_COMMAND ${LUA_PATH}/configure
-    BUILD_COMMAND make BUILD_MODE=static XCFLAGS="-fPIC" -C ${LUA_PATH}
-    INSTALL_COMMAND cp ${LUA_PATH}/src/libluajit.a "${CMAKE_CURRENT_BINARY_DIR}/lib/libluajit.a")
-  add_library(libluajit STATIC IMPORTED GLOBAL)
-  set_target_properties(libluajit PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/lib/libluajit.a")
-  add_dependencies(libluajit luajit)
-  include_directories("${CMAKE_CURRENT_BINARY_DIR}/include/")
+  if(FLB_SYSTEM_LUAJIT)
+    set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+    find_package(LUAJIT REQUIRED)
+    link_directories(${LUAJIT_LIBRARY_DIRS})
+    include_directories(${LUAJIT_INCLUDE_DIRS})
+    set(extra_libs
+      ${extra_libs}
+      ${LUAJIT_LIBRARIES})
+  else()
+    set(LUA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib/LuaJIT-2.1.0-beta3)
+    ExternalProject_Add(luajit
+      SOURCE_DIR ${LUA_PATH}
+      CONFIGURE_COMMAND ${LUA_PATH}/configure
+      BUILD_COMMAND make BUILD_MODE=static XCFLAGS="-fPIC" -C ${LUA_PATH}
+      INSTALL_COMMAND cp ${LUA_PATH}/src/libluajit.a "${CMAKE_CURRENT_BINARY_DIR}/lib/libluajit.a")
+    add_library(libluajit STATIC IMPORTED GLOBAL)
+    set_target_properties(libluajit PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/lib/libluajit.a")
+    add_dependencies(libluajit luajit)
+    include_directories("${CMAKE_CURRENT_BINARY_DIR}/include/")
+  endif()
   FLB_DEFINITION(FLB_HAVE_LUAJIT)
 endif()
 

@@ -138,9 +138,11 @@ if(FLB_REGEX)
 endif()
 
 if(FLB_LUAJIT)
-  set(extra_libs
-    ${extra_libs}
-    "libluajit")
+  if(!FLB_SYSTEM_LUAJIT)
+    set(extra_libs
+      ${extra_libs}
+      "libluajit")
+  endif()
 endif()
 
 if(FLB_SQLDB)
