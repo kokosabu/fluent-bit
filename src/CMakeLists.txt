@@ -43,7 +43,6 @@ set(src
 include_directories(
   .
   ../lib/
-  ../lib/jsmn
   ../lib/msgpack-c-0b7cabd/include
   ../lib/monkey/include/
   ../lib/luajit-2.0.5/src/

@@ -52,6 +52,7 @@ option(FLB_SANITIZE_ADDRESS   "Enable address sanitizer"      No)
 
 # Usage of System Libraries
 option(FLB_SYSTEM_LUAJIT      "Use LuaJIT provided by system"   No)
+option(FLB_SYSTEM_JSMN        "Use jsmn provided by system"     No)
 option(FLB_SYSTEM_MBEDTLS     "Use mbedtls provided by system"  No)
 option(FLB_SYSTEM_ONIGMO      "Use onigmo provided by system"   No)
 
@@ -247,7 +248,22 @@ add_subdirectory(lib/msgpack-3.1.1 EXCLUDE_FROM_ALL)
 # Lib: build the core libraries used by Fluent-Bit
 FLB_DEFINITION(JSMN_PARENT_LINKS)
 FLB_DEFINITION(JSMN_STRICT)
-add_subdirectory(lib/jsmn)
+if(!FLB_SYSTEM_JSMN)
+  add_subdirectory(lib/jsmn)
+  set(extra_headers
+    ${extra_headers}
+    "lib/jsmn")
+else()
+  set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+  find_package(JSMN REQUIRED)
+  link_directories(${JSMN_LIBRARY_DIRS})
+  set(extra_headers
+    ${extra_headers}
+    ${JSMN_INCLUDE_DIRS})
+  set(extra_libs
+    ${extra_libs}
+    ${JSMN_LIBRARIES})
+endif()
 
 if(FLB_BUFFERING)
   add_subdirectory(lib/sha1)
