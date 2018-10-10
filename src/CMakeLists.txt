@@ -119,9 +119,11 @@ set(extra_libs
   "co")
 
 if(FLB_JEMALLOC)
-  set(extra_libs
-    ${extra_libs}
-    "libjemalloc")
+  if(NOT FLB_SYSTEM_JEMALLOC)
+    set(extra_libs
+      ${extra_libs}
+      "libjemalloc")
+  endif()
 endif()
 
 if(FLB_REGEX)
@@ -240,7 +242,9 @@ else()
 endif(MSVC)
 
 if(FLB_JEMALLOC)
-  target_link_libraries(fluent-bit-static libjemalloc)
+  if(NOT FLB_SYSTEM_JEMALLOC)
+    target_link_libraries(fluent-bit-static libjemalloc)
+  endif()
 endif()
 
 if(FLB_BUFFERING)
@@ -261,7 +265,9 @@ if(FLB_BINARY)
   endif()
 
   if(FLB_JEMALLOC)
-    target_link_libraries(fluent-bit-bin libjemalloc)
+    if(NOT FLB_SYSTEM_JEMALLOC)
+      target_link_libraries(fluent-bit-bin libjemalloc)
+    endif()
   endif()
 
   if(FLB_BACKTRACE)

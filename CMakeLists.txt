@@ -52,6 +52,7 @@ option(FLB_SANITIZE_ADDRESS   "Enable address sanitizer"      No)
 
 # Usage of System Libraries
 option(FLB_SYSTEM_LUAJIT      "Use LuaJIT provided by system"   No)
+option(FLB_SYSTEM_JEMALLOC    "Use jemalloc provided by system" No)
 option(FLB_SYSTEM_JSMN        "Use jsmn provided by system"     No)
 option(FLB_SYSTEM_MBEDTLS     "Use mbedtls provided by system"  No)
 option(FLB_SYSTEM_ONIGMO      "Use onigmo provided by system"   No)
@@ -447,18 +448,28 @@ if(FLB_JEMALLOC AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   FLB_DEFINITION(FLB_HAVE_JEMALLOC)
   FLB_DEFINITION(JEMALLOC_MANGLE)
 
-  # Link to Jemalloc as an external dependency
-  ExternalProject_Add(jemalloc
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/jemalloc
-    CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lib/jemalloc/configure ${AUTOCONF_HOST_OPT} --with-lg-quantum=3 --enable-cc-silence --prefix=<INSTALL_DIR>
-    CFLAGS=-std=gnu99\ -Wall\ -pipe\ -g3\ -O3\ -funroll-loops
-    BUILD_COMMAND ${MAKE}
-    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/
-    INSTALL_COMMAND $(MAKE) install_lib_static install_include)
-  add_library(libjemalloc STATIC IMPORTED GLOBAL)
-  set_target_properties(libjemalloc PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/lib/libjemalloc_pic.a")
-  add_dependencies(libjemalloc jemalloc)
-  include_directories("${CMAKE_CURRENT_BINARY_DIR}/include/")
+  if(FLB_SYSTEM_JEMALLOC)
+    set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+    find_package(JEMALLOC REQUIRED)
+    link_directories(${JEMALLOC_LIBRARY_DIRS})
+    include_directories(${JEMALLOC_INCLUDE_DIRS})
+    set(extra_libs
+      ${extra_libs}
+      ${JEMALLOC_LIBRARIES})
+  else()
+    # Link to Jemalloc as an external dependency
+    ExternalProject_Add(jemalloc
+      SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/jemalloc
+      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/lib/jemalloc/configure ${AUTOCONF_HOST_OPT} --with-lg-quantum=3 --enable-cc-silence --prefix=<INSTALL_DIR>
+      CFLAGS=-std=gnu99\ -Wall\ -pipe\ -g3\ -O3\ -funroll-loops
+      BUILD_COMMAND ${MAKE}
+      INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/
+      INSTALL_COMMAND $(MAKE) install_lib_static install_include)
+    add_library(libjemalloc STATIC IMPORTED GLOBAL)
+    set_target_properties(libjemalloc PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/lib/libjemalloc_pic.a")
+    add_dependencies(libjemalloc jemalloc)
+    include_directories("${CMAKE_CURRENT_BINARY_DIR}/include/")
+  endif()
 else()
   FLB_OPTION(FLB_JEMALLOC OFF)
 endif()

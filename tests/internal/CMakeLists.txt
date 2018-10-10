@@ -56,7 +56,7 @@ foreach(source_file ${UNIT_TESTS_FILES})
     add_sanitizers(${source_file_we})
   endif()
 
-  if(FLB_JEMALLOC)
+  if(FLB_JEMALLOC AND NOT FLB_SYSTEM_JEMALLOC)
     target_link_libraries(${source_file_we} libjemalloc ${CMAKE_THREAD_LIBS_INIT})
   else()
     target_link_libraries(${source_file_we} ${CMAKE_THREAD_LIBS_INIT})
